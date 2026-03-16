@@ -1,0 +1,5 @@
+cicids2017_cleaned.csv
+.DS_Store
+__pycache__/
+models/*.pkl
+*.pyc

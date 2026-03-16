@@ -13,6 +13,7 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (classification_report, confusion_matrix,
                              accuracy_score, f1_score)
+from imblearn.over_sampling import SMOTE
 import matplotlib.pyplot as plt
 import seaborn as sns
 import warnings
@@ -52,16 +53,7 @@ df.drop(columns=REDUNDANT_COLS, inplace=True)
 print(f"   Dropped redundant columns: {REDUNDANT_COLS}")
 print(f"   Remaining feature count: {df.shape[1] - 1}")  # -1 for label
 
-# 2b. Handle inf / NaN (can appear in rate-based features like Flow Bytes/s)
-num_inf  = np.isinf(df.select_dtypes(include=[np.number])).sum().sum()
-num_null = df.isnull().sum().sum()
-print(f"\n   Inf values  : {num_inf:,}")
-print(f"   Null values : {num_null:,}")
-df.replace([np.inf, -np.inf], np.nan, inplace=True)
-df.fillna(df.median(numeric_only=True), inplace=True)
-print("   → Replaced Inf with NaN, filled NaN with column median.")
-
-# 2c. Encode label
+# 2b. Encode label
 TARGET = 'Attack Type'
 le = LabelEncoder()
 df['label_encoded'] = le.fit_transform(df[TARGET])
@@ -89,7 +81,37 @@ X_val_s   = scaler.transform(X_val)
 X_test_s  = scaler.transform(X_test)
 print("\n   Features scaled with StandardScaler (fit on train only).")
 
-# 2g. Save scaler & encoder for later use
+# 2g. Apply SMOTE to balance minority classes (especially Bots)
+print("\n" + "="*60)
+print("2g. APPLYING SMOTE (Synthetic Minority Over-sampling)")
+print("="*60)
+
+# Check class distribution before SMOTE
+train_dist_before = pd.Series(y_train).value_counts().sort_index()
+print("\n   Class distribution BEFORE SMOTE:")
+for class_idx, count in train_dist_before.items():
+    print(f"     {le.classes_[class_idx]:<18} : {count:>8,} samples")
+
+# Apply SMOTE - oversample minority classes moderately
+# Strategy: tăng Bots và Web Attacks lên 3x (không quá nhiều để tránh overfitting)
+sampling_strategy = {
+    0: 4000,  # Bots: 1364 → 4000
+    6: 4500,  # Web Attacks: 1500 → 4500
+}
+
+smote = SMOTE(sampling_strategy=sampling_strategy, random_state=42, k_neighbors=3)
+X_train_s, y_train = smote.fit_resample(X_train_s, y_train)
+
+train_dist_after = pd.Series(y_train).value_counts().sort_index()
+print("\n   Class distribution AFTER SMOTE:")
+for class_idx, count in train_dist_after.items():
+    print(f"     {le.classes_[class_idx]:<18} : {count:>8,} samples")
+
+print(f"\n   Total training samples: {len(y_train):,}")
+print("   → SMOTE tạo synthetic samples cho Bots và Web Attacks")
+print("   → Giúp model học tốt hơn pattern của các class hiếm")
+
+# 2h. Save scaler & encoder for later use
 joblib.dump(scaler, os.path.join(MODEL_DIR, 'scaler.pkl'))
 joblib.dump(le,     os.path.join(MODEL_DIR, 'label_encoder.pkl'))
 print("   Saved scaler.pkl and label_encoder.pkl")
@@ -100,8 +122,9 @@ print("3. TRAINING BASELINE MODEL (Random Forest + class_weight='balanced')")
 print("="*60)
 
 rf = RandomForestClassifier(
-    n_estimators=100,
-    max_depth=20,
+    n_estimators=150,
+    max_depth=25,
+    min_samples_split=5,
     class_weight='balanced',   # handles imbalance
     n_jobs=-1,
     random_state=42,

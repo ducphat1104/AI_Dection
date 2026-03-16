@@ -24,23 +24,51 @@ Dự án này sử dụng mô hình học máy **Random Forest + SMOTE** để p
 ## 🚀 Hướng Dẫn Chạy Demo
 
 ### 1. Cài đặt môi trường
-Trước tiên, hãy đảm bảo bạn đã cài đặt các thư viện cần thiết:
+
+#### macOS / Linux:
+```bash
+pip3 install pandas numpy scikit-learn matplotlib seaborn joblib streamlit plotly imbalanced-learn
+```
+
+#### Windows:
 ```bash
 pip install pandas numpy scikit-learn matplotlib seaborn joblib streamlit plotly imbalanced-learn
 ```
 
+Hoặc nếu dùng Anaconda:
+```bash
+conda install pandas numpy scikit-learn matplotlib seaborn joblib
+pip install streamlit plotly imbalanced-learn
+```
+
 ### 2. Chạy EDA (Khám phá dữ liệu - Optional)
 Để hiểu rõ về dataset và quyết định preprocessing:
+
+**macOS / Linux:**
 ```bash
 python3 step1_eda.py
 ```
+
+**Windows:**
+```bash
+python step1_eda.py
+```
+
 *Script này tạo ra các biểu đồ phân tích trong thư mục `visualizations/`*
 
 ### 3. Huấn luyện mô hình
 Chạy script huấn luyện để xử lý dữ liệu và tạo ra file mô hình:
+
+**macOS / Linux:**
 ```bash
 python3 step2_preprocess_train.py
 ```
+
+**Windows:**
+```bash
+python step2_preprocess_train.py
+```
+
 *Script này sẽ:*
 - Drop 4 features thừa (correlation > 0.90)
 - Áp dụng SMOTE để cân bằng class Bots và Web Attacks
@@ -48,15 +76,30 @@ python3 step2_preprocess_train.py
 - Lưu model vào `models/` và visualizations vào `visualizations/`
 
 ### 4. Đánh giá trên Test Set
+
+**macOS / Linux:**
 ```bash
 python3 step3_final_test.py
 ```
 
+**Windows:**
+```bash
+python step3_final_test.py
+```
+
 ### 5. Chạy Dashboard Dự Đoán (Dùng để Demo)
 Đây là phần quan trọng nhất để trình bày. Hãy chạy lệnh sau:
+
+**macOS / Linux:**
 ```bash
 streamlit run app.py
 ```
+
+**Windows:**
+```bash
+streamlit run app.py
+```
+
 Sau khi chạy, một trang web sẽ tự động mở ra tại: `http://localhost:8501`
 
 ---
